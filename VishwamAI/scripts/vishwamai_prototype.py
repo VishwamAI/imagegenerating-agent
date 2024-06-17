@@ -74,6 +74,7 @@ class VishwamAI:
 
     def load_sample_dataset(self, batch_size):
         def preprocess_image(image_path):
+            image_path = str(image_path)  # Ensure image_path is a string
             image = tf.io.read_file(image_path)
             image = tf.image.decode_jpeg(image, channels=3)
             image = tf.image.resize(image, [1080, 1080])
@@ -116,28 +117,6 @@ class VishwamAI:
                 if epoch % 1000 == 0:
                     self.generator.save(f'models/generator_epoch_{epoch}.h5')
                     self.discriminator.save(f'models/discriminator_epoch_{epoch}.h5')
-
-    def train_and_generate_images(self, epochs, batch_size, input_text, num_images=10, output_dir="generated_images"):
-        # Train the model
-        self.train(epochs, batch_size)
-
-        # Generate images based on input text
-        if not os.path.exists(output_dir):
-            os.makedirs(output_dir)
-        for i in range(num_images):
-            generated_image = self.generate_image(input_text)
-            generated_image = (generated_image * 127.5 + 127.5).astype(np.uint8)  # Denormalize to [0, 255]
-            tf.keras.preprocessing.image.save_img(f"{output_dir}/generated_image_{i}.png", generated_image[0])
-        print(f"Generated {num_images} images based on the input text: '{input_text}'")
-
-    def generate_image(self, input_text):
-        # Generate image based on input text using NLP and GAN
-        inputs = self.tokenizer(input_text, return_tensors="tf")
-        outputs = self.nlp_model(inputs)
-        noise = np.random.normal(0, 1, (1, 100))
-        noise = noise + outputs.last_hidden_state.numpy().flatten()[:100]  # Incorporate NLP model outputs into noise
-        generated_image = self.generator.predict(noise)
-        return generated_image
 
     def self_improve(self):
         # Evaluate model performance
@@ -270,3 +249,26 @@ def test_generate_images(input_text, num_images=10, output_dir="generated_images
         generated_image = (generated_image * 127.5 + 127.5).astype(np.uint8)  # Denormalize to [0, 255]
         tf.keras.preprocessing.image.save_img(f"{output_dir}/generated_image_{i}.png", generated_image[0])
     print(f"Generated {num_images} images based on the input text: '{input_text}'")
+
+def train_and_generate_images(vishwamai, epochs, batch_size, input_text, num_images=10, output_dir="generated_images"):
+    # Train the model
+    vishwamai.train(epochs, batch_size)
+
+    # Generate images based on input text
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+    for i in range(num_images):
+        generated_image = vishwamai.generate_image(input_text)
+        generated_image = (generated_image * 127.5 + 127.5).astype(np.uint8)  # Denormalize to [0, 255]
+        tf.keras.preprocessing.image.save_img(f"{output_dir}/generated_image_{i}.png", generated_image[0])
+    print(f"Generated {num_images} images based on the input text: '{input_text}'")
+
+def generate_image(vishwamai, input_text):
+    # Generate image based on input text using NLP and GAN
+    inputs = vishwamai.tokenizer(input_text, return_tensors="tf")
+    outputs = vishwamai.nlp_model(inputs)
+    noise = np.random.normal(0, 1, (1, 100))
+    noise = noise + outputs.last_hidden_state.numpy().flatten()[:100]  # Incorporate NLP model outputs into noise
+    generated_image = vishwamai.generator.predict(noise)
+    generated_image = (generated_image * 127.5 + 127.5).astype(np.uint8)  # Denormalize to [0, 255]
+    return generated_image
