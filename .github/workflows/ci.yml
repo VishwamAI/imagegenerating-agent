@@ -29,3 +29,5 @@ jobs:
     - name: Run tests
       run: |
         pytest
+
+# Triggering a new workflow run with a trivial change
