@@ -29,14 +29,14 @@ jobs:
 
     - name: Install dependencies
       run: |
-        cd imagegenerating-agent-fresh
+        cd /home/ubuntu/imagegenerating-agent-fresh
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         pip install pytest
 
     - name: Run tests
       run: |
-        cd imagegenerating-agent-fresh
+        cd /home/ubuntu/imagegenerating-agent-fresh
         pytest
 
 # Triggering a new workflow run with a trivial change
