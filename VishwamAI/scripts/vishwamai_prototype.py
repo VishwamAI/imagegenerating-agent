@@ -281,7 +281,9 @@ def generate_image(vishwamai, input_text):
     inputs = vishwamai.tokenizer(input_text, return_tensors="tf")
     outputs = vishwamai.nlp_model(inputs)
     noise = np.random.normal(0, 1, (1, 100))
-    noise = noise + outputs.last_hidden_state.numpy().flatten()[:100]  # Incorporate NLP model outputs into noise
+    nlp_output = outputs.last_hidden_state.numpy().flatten()[:100]
+    nlp_output = np.reshape(nlp_output, noise.shape)  # Reshape to match the shape of noise
+    noise = noise + nlp_output  # Incorporate NLP model outputs into noise
     generated_image = vishwamai.generator.predict(noise)
     generated_image = (generated_image * 127.5 + 127.5).astype(np.uint8)  # Denormalize to [0, 255]
     generated_image = tf.image.resize(generated_image, [256, 256])  # Resize to (256, 256, 3)
