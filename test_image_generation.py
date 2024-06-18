@@ -1,7 +1,7 @@
 import requests
 import pytest
 
-BASE_URL = "http://127.0.0.1:5000"
+BASE_URL = "https://783e-2600-1f14-db0-ba00-bdaa-76cd-8c2f-8339.ngrok-free.app"
 
 def test_generate_image_4k():
     description = "Narendra Modi"
@@ -11,7 +11,7 @@ def test_generate_image_4k():
     assert image_url is not None
 
     # Verify the image resolution
-    image_response = requests.get(image_url)
+    image_response = requests.get(f"{BASE_URL}{image_url}")
     assert image_response.status_code == 200
     with open("generated_image_4k.png", "wb") as f:
         f.write(image_response.content)
@@ -27,7 +27,7 @@ def test_generate_image_2k():
     assert image_url is not None
 
     # Verify the image resolution
-    image_response = requests.get(image_url)
+    image_response = requests.get(f"{BASE_URL}{image_url}")
     assert image_response.status_code == 200
     with open("generated_image_2k.png", "wb") as f:
         f.write(image_response.content)
