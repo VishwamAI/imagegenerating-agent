@@ -1,0 +1,5 @@
+tensorflow
+transformers
+numpy
+requests
+beautifulsoup4
