@@ -3,7 +3,6 @@
 ## Overview
 VishwamAI is an image-generating chat model designed to create images based on chat interactions. The model will be capable of self-improvement and will have internet access without relying on APIs and development.
 
-
 ## Components
 1. **Generative Model**: The core of VishwamAI will be a generative model, such as a Generative Adversarial Network (GAN) or a Variational Autoencoder (VAE), which will be responsible for generating images.
 2. **Natural Language Processing (NLP) Component**: This component will handle the chat interactions, understanding user inputs, and generating appropriate responses.
@@ -78,3 +77,4 @@ You can learn more in the [Create React App documentation](https://facebook.gith
 To learn React, check out the [React documentation](https://reactjs.org/).
 
 <!-- Trivial change to trigger CI workflow -->
+<!-- Another trivial change to trigger CI workflow -->
