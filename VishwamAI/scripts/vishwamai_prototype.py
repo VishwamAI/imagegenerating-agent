@@ -243,6 +243,26 @@ class VishwamAI:
                 except Exception as e:
                     print(f"Error loading image {image_path}: {e}")
 
+    def generate_image(self, input_text):
+        # Generate image based on input text using NLP and GAN
+        print("Input text:", input_text)  # Debugging: Log input text
+        inputs = self.tokenizer(input_text, return_tensors="tf")
+        print("Tokenized inputs:", inputs)  # Debugging: Log tokenized inputs
+        outputs = self.nlp_model(inputs)
+        print("NLP model outputs:", outputs)  # Debugging: Log NLP model outputs
+        noise = np.random.normal(0, 1, (1, 100))
+        nlp_output = outputs.last_hidden_state.numpy().flatten()[:100]
+        nlp_output = np.reshape(nlp_output, noise.shape)  # Reshape to match the shape of noise
+        noise = noise + nlp_output  # Incorporate NLP model outputs into noise
+        print("Noise vector after NLP processing:", noise)  # Debugging: Log noise vector
+        generated_image = self.generator.predict(noise)
+        print("Generated image before denormalization:", generated_image)  # Debugging: Log generated image
+        generated_image = (generated_image * 127.5 + 127.5).astype(np.uint8)  # Denormalize to [0, 255]
+        generated_image = tf.image.resize(generated_image, [256, 256])  # Resize to (256, 256, 3)
+        generated_image = generated_image.numpy()  # Convert to numpy array
+        print("Generated image after denormalization and resizing:", generated_image)  # Debugging: Log final image
+        return generated_image
+
 def test_data_generator(batch_size=2):
     vishwamai = VishwamAI(batch_size=batch_size)
     dataset = vishwamai.load_sample_dataset(batch_size)
@@ -276,19 +296,7 @@ def train_and_generate_images(vishwamai, epochs, batch_size, input_text, num_ima
         tf.keras.preprocessing.image.save_img(f"{output_dir}/generated_image_{i}.png", generated_image[0])
     print(f"Generated {num_images} images based on the input text: '{input_text}'")
 
-def generate_image(vishwamai, input_text):
-    # Generate image based on input text using NLP and GAN
-    inputs = vishwamai.tokenizer(input_text, return_tensors="tf")
-    outputs = vishwamai.nlp_model(inputs)
-    noise = np.random.normal(0, 1, (1, 100))
-    nlp_output = outputs.last_hidden_state.numpy().flatten()[:100]
-    nlp_output = np.reshape(nlp_output, noise.shape)  # Reshape to match the shape of noise
-    noise = noise + nlp_output  # Incorporate NLP model outputs into noise
-    generated_image = vishwamai.generator.predict(noise)
-    generated_image = (generated_image * 127.5 + 127.5).astype(np.uint8)  # Denormalize to [0, 255]
-    generated_image = tf.image.resize(generated_image, [256, 256])  # Resize to (256, 256, 3)
-    return generated_image
-
 if __name__ == "__main__":
     vishwamai = VishwamAI(batch_size=32)
     vishwamai.train(epochs=1000, batch_size=32)
+    test_generate_images(input_text="Narendra Modi", num_images=1)
