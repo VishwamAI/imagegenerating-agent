@@ -6,6 +6,15 @@ from transformers import GPT2Tokenizer, TFGPT2Model
 from tensorflow.keras.applications.inception_v3 import InceptionV3, preprocess_input
 from scipy.linalg import sqrtm
 
+# Configure TensorFlow for dynamic memory allocation
+gpus = tf.config.experimental.list_physical_devices('GPU')
+if gpus:
+    try:
+        for gpu in gpus:
+            tf.config.experimental.set_memory_growth(gpu, True)
+    except RuntimeError as e:
+        print(e)
+
 class VishwamAI:
     def __init__(self, batch_size):
         self.generator = self.build_generator()
