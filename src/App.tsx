@@ -17,7 +17,8 @@ function App() {
       });
 
       const data = await response.json();
-      setImageUrl(data.image_url);
+      setImageUrl(`http://10.240.176.61:5000${data.image_url}`);
+      console.log('Generated Image URL:', `http://10.240.176.61:5000${data.image_url}`); // Log the image URL to the console
     } catch (error) {
       console.error('Error generating image:', error);
     }
