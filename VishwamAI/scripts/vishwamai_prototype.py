@@ -243,7 +243,7 @@ class VishwamAI:
                 except Exception as e:
                     print(f"Error loading image {image_path}: {e}")
 
-    def generate_image(self, input_text):
+    def generate_image(self, input_text, resolution=(256, 256)):
         # Generate image based on input text using NLP and GAN
         print("Input text:", input_text)  # Debugging: Log input text
         inputs = self.tokenizer(input_text, return_tensors="tf")
@@ -258,7 +258,7 @@ class VishwamAI:
         generated_image = self.generator.predict(noise)
         print("Generated image before denormalization:", generated_image)  # Debugging: Log generated image
         generated_image = (generated_image * 127.5 + 127.5).astype(np.uint8)  # Denormalize to [0, 255]
-        generated_image = tf.image.resize(generated_image, [256, 256])  # Resize to (256, 256, 3)
+        generated_image = tf.image.resize(generated_image, resolution)  # Resize to the specified resolution
         generated_image = generated_image.numpy()  # Convert to numpy array
         print("Generated image after denormalization and resizing:", generated_image)  # Debugging: Log final image
         return generated_image
@@ -273,15 +273,15 @@ def test_data_generator(batch_size=2):
 if __name__ == "__main__":
     test_data_generator(batch_size=2)
 
-def test_generate_images(input_text, num_images=10, output_dir="generated_images"):
+def test_generate_images(input_text, num_images=10, output_dir="generated_images", resolution=(256, 256)):
     vishwamai = VishwamAI(batch_size=32)
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
     for i in range(num_images):
-        generated_image = vishwamai.generate_image(input_text)
+        generated_image = vishwamai.generate_image(input_text, resolution=resolution)
         generated_image = (generated_image * 127.5 + 127.5).astype(np.uint8)  # Denormalize to [0, 255]
         tf.keras.preprocessing.image.save_img(f"{output_dir}/generated_image_{i}.png", generated_image[0])
-    print(f"Generated {num_images} images based on the input text: '{input_text}'")
+    print(f"Generated {num_images} images based on the input text: '{input_text}' at resolution {resolution}")
 
 def train_and_generate_images(vishwamai, epochs, batch_size, input_text, num_images=10, output_dir="generated_images"):
     # Train the model
