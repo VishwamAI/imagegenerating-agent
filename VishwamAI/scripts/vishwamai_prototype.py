@@ -17,31 +17,28 @@ class VishwamAI:
     def build_generator(self):
         model = models.Sequential()
         model.add(layers.Input(shape=(100,)))
-        model.add(layers.Dense(135 * 135 * 16, activation='tanh'))
-        model.add(layers.Reshape((135, 135, 16)))
-        model.add(layers.Conv2DTranspose(512, (4, 4), strides=(2, 2), padding='same'))
-        model.add(layers.LeakyReLU(negative_slope=0.2))
-        print(model.output_shape)
+        model.add(layers.Dense(8 * 8 * 256, activation='tanh'))
+        model.add(layers.Reshape((8, 8, 256)))
         model.add(layers.Conv2DTranspose(256, (4, 4), strides=(2, 2), padding='same'))
         model.add(layers.LeakyReLU(negative_slope=0.2))
         print(model.output_shape)
         model.add(layers.Conv2DTranspose(128, (4, 4), strides=(2, 2), padding='same'))
         model.add(layers.LeakyReLU(negative_slope=0.2))
         print(model.output_shape)
-        model.add(layers.Conv2DTranspose(64, (4, 4), strides=(1, 1), padding='same'))
+        model.add(layers.Conv2DTranspose(64, (4, 4), strides=(2, 2), padding='same'))
         model.add(layers.LeakyReLU(negative_slope=0.2))
         print(model.output_shape)
-        model.add(layers.Conv2DTranspose(32, (4, 4), strides=(1, 1), padding='same'))
+        model.add(layers.Conv2DTranspose(32, (4, 4), strides=(2, 2), padding='same'))
         model.add(layers.LeakyReLU(negative_slope=0.2))
         print(model.output_shape)
-        model.add(layers.Conv2DTranspose(3, (4, 4), strides=(1, 1), padding='same', activation='tanh'))
+        model.add(layers.Conv2DTranspose(3, (4, 4), strides=(2, 2), padding='same', activation='tanh'))
         print(model.output_shape)
         model.compile(optimizer='adam', loss='binary_crossentropy')
         return model
 
     def build_discriminator(self):
         model = models.Sequential()
-        model.add(layers.Conv2D(32, (4, 4), strides=(2, 2), padding='same', input_shape=(1080, 1080, 3)))
+        model.add(layers.Conv2D(32, (4, 4), strides=(2, 2), padding='same', input_shape=(256, 256, 3)))
         model.add(layers.LeakyReLU(negative_slope=0.2))
         model.add(layers.Conv2D(64, (4, 4), strides=(2, 2), padding='same'))
         model.add(layers.LeakyReLU(negative_slope=0.2))
@@ -74,16 +71,28 @@ class VishwamAI:
 
     def load_sample_dataset(self, batch_size):
         def preprocess_image(image_path):
-            image_path = str(image_path)  # Ensure image_path is a string
-            image = tf.io.read_file(image_path)
-            image = tf.image.decode_jpeg(image, channels=3)
-            image = tf.image.resize(image, [1080, 1080])
+            def read_image(image_path):
+                image_path = image_path.numpy().decode('utf-8')  # Decode bytes to string
+                print(f"Reading image from path: {image_path}")  # Print the full image path
+                image = tf.io.read_file(image_path)
+                image = tf.image.decode_jpeg(image, channels=3)
+                image = tf.cast(image, tf.float32)  # Cast image to float32
+                return image
+
+            image = tf.py_function(read_image, [image_path], tf.float32)
+            image.set_shape([None, None, 3])  # Set the shape of the image tensor
+            image = tf.image.resize(image, [256, 256])
             image = (image - 127.5) / 127.5  # Normalize to [-1, 1]
             return image
 
-        image_paths = [os.path.join('/home/ubuntu/VishwamAI/data/sample_dataset', image_path)
-                       for image_path in os.listdir('/home/ubuntu/VishwamAI/data/sample_dataset')
+        dataset_path = os.path.join(os.path.dirname(__file__), '../data/sample_dataset')
+        image_paths = [os.path.join(dataset_path, image_path)
+                       for image_path in os.listdir(dataset_path)
                        if image_path.lower().endswith(('.jpg', '.jpeg', '.png'))]
+
+        if not image_paths:
+            print("No images found in sample_dataset directory. Returning an empty dataset.")
+            return tf.data.Dataset.from_tensor_slices([])
 
         dataset = tf.data.Dataset.from_tensor_slices(image_paths)
         dataset = dataset.map(preprocess_image, num_parallel_calls=tf.data.experimental.AUTOTUNE)
@@ -92,12 +101,16 @@ class VishwamAI:
         dataset = dataset.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
         return dataset
 
-    def train(self, epochs, batch_size):
+    def train(self, epochs, batch_size=1):
         # Training loop for GAN
         half_batch = int(batch_size / 2)
         print(f"Batch size: {batch_size}, Half batch: {half_batch}")
         for epoch in range(epochs):
             for real_images in self.sample_dataset:
+                # Ensure the batch size is consistent
+                if real_images.shape[0] < half_batch:
+                    continue
+
                 # Train Discriminator
                 noise = np.random.normal(0, 1, (half_batch, 100))
                 generated_images = self.generator.predict(noise)
@@ -271,4 +284,9 @@ def generate_image(vishwamai, input_text):
     noise = noise + outputs.last_hidden_state.numpy().flatten()[:100]  # Incorporate NLP model outputs into noise
     generated_image = vishwamai.generator.predict(noise)
     generated_image = (generated_image * 127.5 + 127.5).astype(np.uint8)  # Denormalize to [0, 255]
+    generated_image = tf.image.resize(generated_image, [256, 256])  # Resize to (256, 256, 3)
     return generated_image
+
+if __name__ == "__main__":
+    vishwamai = VishwamAI(batch_size=32)
+    vishwamai.train(epochs=1000, batch_size=32)
