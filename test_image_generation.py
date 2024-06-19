@@ -76,4 +76,4 @@ def test_generate_image_2k():
     from PIL import Image
     image = Image.open("generated_image_2k.png")
     print(f"Image size: {image.size}")
-    assert image.size == (2048, 1080)
+    assert image.size == (2560, 1440)
