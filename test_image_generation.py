@@ -21,7 +21,9 @@ def test_generate_image_4k():
         content_type="image/png"
     )
 
+    print(f"Base URL: {BASE_URL}")
     response = requests.post(f"{BASE_URL}/generate_image", json={"input_text": input_text})
+    print(f"Full request URL: {response.url}")
     print(f"Response status code: {response.status_code}")
     assert response.status_code == 200
     image_url = response.json().get("image_url")
@@ -56,7 +58,9 @@ def test_generate_image_2k():
         content_type="image/png"
     )
 
+    print(f"Base URL: {BASE_URL}")
     response = requests.post(f"{BASE_URL}/generate_image", json={"input_text": input_text})
+    print(f"Full request URL: {response.url}")
     print(f"Response status code: {response.status_code}")
     assert response.status_code == 200
     image_url = response.json().get("image_url")
