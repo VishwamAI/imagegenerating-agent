@@ -30,3 +30,9 @@ models/
 
 # Ignore any other untracked files
 .DS_Store
+
+# Ignore demo generated images
+demo_generated_images/
+
+# Ignore memory profiler data files
+mprofile_*.dat
