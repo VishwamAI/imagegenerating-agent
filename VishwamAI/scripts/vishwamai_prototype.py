@@ -91,8 +91,8 @@ class VishwamAI:
                 noise = np.random.normal(0, 1, (half_batch, 100))
                 generated_images = self.generator.predict(noise)
 
-                # Create real images (random noise for now)
-                real_images = np.random.normal(0, 1, (half_batch, 1080, 1080, 3))
+                # Load real images from the sample dataset
+                real_images = next(iter(self.load_sample_dataset(half_batch)))
 
                 # Train Discriminator
                 d_loss_real = self.discriminator.train_on_batch(real_images, np.ones((half_batch, 1)))
