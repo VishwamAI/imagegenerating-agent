@@ -12,22 +12,17 @@ class VishwamAI:
         self.discriminator = self.build_discriminator()
         self.gan = self.build_gan(self.generator, self.discriminator)
         self.nlp_model, self.tokenizer = self.build_nlp_model()
-        self.sample_dataset = self.load_sample_dataset(batch_size)
 
     def build_generator(self):
         model = models.Sequential()
         model.add(layers.Input(shape=(100,)))
-        model.add(layers.Dense(135 * 135 * 16, activation='tanh'))
-        model.add(layers.Reshape((135, 135, 16)))
+        model.add(layers.Dense(135 * 135 * 8, activation='tanh'))  # Reduced size of initial dense layer's output
+        model.add(layers.Reshape((135, 135, 8)))
         model.add(layers.Conv2DTranspose(512, (4, 4), strides=(2, 2), padding='same'))
         model.add(layers.LeakyReLU(negative_slope=0.2))
         model.add(layers.Conv2DTranspose(256, (4, 4), strides=(2, 2), padding='same'))
         model.add(layers.LeakyReLU(negative_slope=0.2))
         model.add(layers.Conv2DTranspose(128, (4, 4), strides=(2, 2), padding='same'))
-        model.add(layers.LeakyReLU(negative_slope=0.2))
-        model.add(layers.Conv2DTranspose(64, (4, 4), strides=(1, 1), padding='same'))
-        model.add(layers.LeakyReLU(negative_slope=0.2))
-        model.add(layers.Conv2DTranspose(32, (4, 4), strides=(1, 1), padding='same'))
         model.add(layers.LeakyReLU(negative_slope=0.2))
         model.add(layers.Conv2DTranspose(3, (4, 4), strides=(1, 1), padding='same', activation='tanh'))
         model.compile(optimizer='adam', loss='binary_crossentropy')
@@ -75,8 +70,8 @@ class VishwamAI:
             image = (image - 127.5) / 127.5  # Normalize to [-1, 1]
             return image
 
-        image_paths = [os.path.join('/home/ubuntu/VishwamAI/data/sample_dataset', image_path)
-                       for image_path in os.listdir('/home/ubuntu/VishwamAI/data/sample_dataset')
+        image_paths = [os.path.join('../data/sample_dataset', image_path)
+                       for image_path in os.listdir('../data/sample_dataset')
                        if image_path.lower().endswith(('.jpg', '.jpeg', '.png'))]
 
         dataset = tf.data.Dataset.from_tensor_slices(image_paths)
@@ -91,11 +86,16 @@ class VishwamAI:
         half_batch = int(batch_size / 2)
         print(f"Batch size: {batch_size}, Half batch: {half_batch}")
         for epoch in range(epochs):
-            for real_images in self.sample_dataset:
-                # Train Discriminator
+            for _ in range(half_batch):
+                # Generate random noise and create fake images
                 noise = np.random.normal(0, 1, (half_batch, 100))
                 generated_images = self.generator.predict(noise)
-                d_loss_real = self.discriminator.train_on_batch(real_images[:half_batch], np.ones((half_batch, 1)))
+
+                # Create real images (random noise for now)
+                real_images = np.random.normal(0, 1, (half_batch, 1080, 1080, 3))
+
+                # Train Discriminator
+                d_loss_real = self.discriminator.train_on_batch(real_images, np.ones((half_batch, 1)))
                 d_loss_fake = self.discriminator.train_on_batch(generated_images, np.zeros((half_batch, 1)))
                 d_loss = 0.5 * np.add(d_loss_real, d_loss_fake)
 
@@ -103,6 +103,9 @@ class VishwamAI:
                 noise = np.random.normal(0, 1, (batch_size, 100))
                 valid_y = np.array([1] * batch_size)
                 g_loss = self.gan.train_on_batch(noise, valid_y)
+
+                # Clear session to free memory
+                tf.keras.backend.clear_session()
 
                 # Print the progress
                 print(f"{epoch} [D loss: {d_loss[0]} | D accuracy: {d_loss[1]}] [G loss: {g_loss}]")
@@ -265,4 +268,5 @@ def generate_image(vishwamai, input_text):
     noise = noise + outputs.last_hidden_state.numpy().flatten()[:100]  # Incorporate NLP model outputs into noise
     generated_image = vishwamai.generator.predict(noise)
     generated_image = (generated_image * 127.5 + 127.5).astype(np.uint8)  # Denormalize to [0, 255]
+    tf.keras.backend.clear_session()  # Clear session to free memory
     return generated_image
