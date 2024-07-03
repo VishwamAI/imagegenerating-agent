@@ -37,4 +37,6 @@ The demo script `demo.py` generates images based on text descriptions from a sam
 ## Conclusion
 The image-generating agent has been improved to produce images with the correct dimensions and optimized for memory usage. The demo script provides an easy way to generate images based on text descriptions from a sample dataset. Follow the steps outlined in this documentation to run the demo and generate images.
 
+**Note:** The model and demo are currently under review to ensure they work as intended. Ongoing optimizations and testing are being performed to achieve the best results.
+
 For any further questions or issues, please refer to the project's README file or contact the project maintainers.
