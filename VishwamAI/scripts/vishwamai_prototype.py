@@ -70,8 +70,9 @@ class VishwamAI:
             image = (image - 127.5) / 127.5  # Normalize to [-1, 1]
             return image
 
-        image_paths = [os.path.join('../data/sample_dataset', image_path)
-                       for image_path in os.listdir('../data/sample_dataset')
+        image_dir = os.path.join(os.path.dirname(__file__), '../images')
+        image_paths = [os.path.join(image_dir, image_path)
+                       for image_path in os.listdir(image_dir)
                        if image_path.lower().endswith(('.jpg', '.jpeg', '.png'))]
 
         dataset = tf.data.Dataset.from_tensor_slices(image_paths)
